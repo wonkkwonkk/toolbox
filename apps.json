@@ -10,14 +10,14 @@
     "name": "기술 인생게임",
     "tag": "BOARD GAME",
     "desc": "아기부터 노년까지, 기술 진로를 골라 가는 인생게임.",
-    "url": "https://won20202.github.io/techlife/",
+    "url": "https://wonkkwonkk.github.io/techlife/",
     "img": "img/techlife.png"
   },
   {
     "name": "탄소중립 제로 게임",
     "tag": "CARD GAME",
     "desc": "카드를 내며 탄소중립을 배우는 카드게임.",
-    "url": "https://won20202.github.io/tansozero/",
+    "url": "https://wonkkwonkk.github.io/tansozero/",
     "img": "img/tansozero.png"
   }
 ]
