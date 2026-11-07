@@ -19,5 +19,12 @@
     "desc": "카드를 내며 탄소중립을 배우는 카드게임.",
     "url": "https://wonkkwonkk.github.io/tansozero/",
     "img": "img/tansozero.png"
+  },
+  {
+    "name": "에너지 마을 시장",
+    "tag": "3D GAME",
+    "desc": "시장이 되어 땅에 맞는 신·재생 에너지 발전소를 짓는 3D 게임.",
+    "url": "https://energy-mayor.netlify.app/",
+    "img": "img/energy-mayor.png"
   }
 ]
