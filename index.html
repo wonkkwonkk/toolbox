@@ -4,21 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>WON's Toolbox</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--wall:#e4e2dc;--hole:#b3afa5;--paper:#f7f6f2;--ink:#1a1a1a;--sub:#4a4842;--mute:#5c5950;--line:#8f8b81;--ac:#ff4f00;--ac2:#e04400}
+:root{--wall:#e4e2dc;--hole:#b3afa5;--paper:#f7f6f2;--ink:#1a1a1a;--sub:#4a4842;--mute:#5c5950;--line:#8f8b81;--ac:#ff4f00;--ac2:#e04400;--bad:#b3261e}
 *{box-sizing:border-box}
 body{margin:0;word-break:keep-all;color:var(--ink);font-family:'Noto Sans KR',sans-serif;
   background-color:var(--wall);background-image:radial-gradient(circle,var(--hole) 3px,transparent 3.6px);background-size:36px 36px;background-position:18px 18px;min-height:100vh}
 .mono{font-family:'JetBrains Mono',monospace}
-.wrap{max-width:1180px;margin:0 auto;padding:32px 16px 64px;display:flex;flex-direction:column;gap:44px}
+.wrap{max-width:1180px;margin:0 auto;padding:32px 16px 64px;display:flex;flex-direction:column;gap:20px}
 @media(min-width:600px){.wrap{padding:32px 32px 64px}}
 .bar{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;background:var(--ink);color:#f2f1ec;padding:12px 18px;border-radius:6px;font-size:13px}
 .bar h1{margin:0;font-size:15px;font-weight:700;letter-spacing:.06em}
 .bar span{color:#c9c6bd}
+#count{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.cats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+.cat{min-height:40px;padding:0 16px;border-radius:99px;border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
+.cat small{font-weight:500;color:var(--mute);margin-left:4px}
+.cat.on{background:var(--ink);color:#fff}
+.cat.on small{color:#c9c6bd}
 .wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:44px 28px}
-.slot{display:flex;flex-direction:column;align-items:center}
+.slot{display:flex;flex-direction:column;align-items:center;gap:8px}
 .pin{width:14px;height:14px;border-radius:50%;background:var(--ink);margin-bottom:-7px;position:relative;z-index:2}
 .tool{transform-origin:50% 0;border:0;padding:0;background:transparent;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%;display:flex;flex-direction:column;align-items:center}
 .tool:hover,.tool:focus-visible{animation:swing 1.1s ease-in-out infinite;outline:none}
@@ -27,16 +34,14 @@ body{margin:0;word-break:keep-all;color:var(--ink);font-family:'Noto Sans KR',sa
 .card{width:100%;background:var(--paper);border:1.5px solid var(--ink);border-radius:10px;padding:22px 14px 14px;display:flex;flex-direction:column;gap:10px;position:relative;transition:box-shadow .2s}
 .tool:hover .card{box-shadow:0 22px 30px -18px rgba(0,0,0,.45)}
 .card::before{content:"";position:absolute;left:50%;top:8px;transform:translateX(-50%);width:26px;height:8px;border-radius:4px;border:1.5px solid var(--ink);background:var(--wall)}
-.meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding-top:6px}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;padding-top:6px}
 .meta b{font-weight:700}
 .tag{background:var(--ac);color:var(--ink);padding:2px 8px;border-radius:3px;font-weight:700;white-space:nowrap}
 .shot{width:100%;aspect-ratio:10/7;object-fit:cover;border-radius:6px;border:1px solid var(--ink);display:block;background:var(--wall)}
 .noshot{display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--mute)}
 .name{font-weight:800;font-size:18px;line-height:1.3}
-.empty .pin{background:var(--line)}
-.empty .hole{width:100%;min-height:270px;border:2px dashed var(--line);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:rgba(247,246,242,.45);color:var(--mute)}
-.empty .hole b{font-size:13px}
-/* 꺼낸 도구 패널 */
+.none{grid-column:1/-1;text-align:center;color:var(--mute);font-size:15px;padding:40px 0}
+/* 꺼낸 도구 패널 · 관리자 편집 패널 */
 .back{position:fixed;inset:0;background:rgba(26,26,26,.4);display:flex;justify-content:flex-end;z-index:20}
 .back[hidden]{display:none}
 .panel{width:min(540px,100%);height:100%;background:var(--paper);border-left:1.5px solid var(--ink);padding:28px 20px;display:flex;flex-direction:column;gap:18px;overflow:auto;animation:slidein .35s cubic-bezier(.2,.8,.2,1)}
@@ -46,39 +51,121 @@ body{margin:0;word-break:keep-all;color:var(--ink);font-family:'Noto Sans KR',sa
 .x:hover{background:var(--ink);color:#fff}
 .panel h2{margin:0;font-weight:800;font-size:32px;letter-spacing:-.02em;line-height:1.2}
 .panel p{margin:0;font-size:17px;line-height:1.7;color:var(--sub)}
-.go{align-self:flex-start;display:inline-flex;align-items:center;min-height:52px;padding:0 28px;border-radius:99px;background:var(--ac);color:var(--ink);font-weight:800;font-size:17px;text-decoration:none;white-space:nowrap;transition:background .2s}
+.go{align-self:flex-start;display:inline-flex;align-items:center;min-height:52px;padding:0 28px;border-radius:99px;background:var(--ac);color:var(--ink);font-weight:800;font-size:17px;text-decoration:none;white-space:nowrap;transition:background .2s;border:0;cursor:pointer;font-family:inherit}
 .go:hover{background:var(--ac2)}
+/* 관리자 */
+.adm-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.adm-bar b{background:var(--ac);color:var(--ink);padding:2px 8px;border-radius:3px}
+.sbtn{min-height:34px;padding:0 12px;border-radius:99px;border:1.5px solid currentColor;background:transparent;color:inherit;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.bar .sbtn:hover{background:#f2f1ec;color:var(--ink)}
+.slot-tools{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+.slot-tools .sbtn{background:var(--paper)}
+.slot-tools .sbtn:hover{background:var(--ink);color:#fff}
+.add .hole{width:100%;min-height:270px;border:2px dashed var(--ink);border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(247,246,242,.6);font:inherit;font-size:16px;font-weight:800;cursor:pointer;color:var(--ink)}
+.add .hole:hover{background:var(--paper)}
+.form{display:flex;flex-direction:column;gap:14px}
+.form label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700}
+.form input[type=text],.form input[type=url],.form input[type=password],.form select,.form textarea{font:inherit;font-size:15px;font-weight:400;padding:10px 12px;border:1.5px solid var(--ink);border-radius:8px;background:#fff;color:var(--ink);width:100%}
+.form textarea{min-height:84px;resize:vertical}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg label{flex-direction:row;align-items:center;gap:6px;font-weight:500;cursor:pointer}
+.hint{font-size:13px;font-weight:400;color:var(--mute)}
+.err{color:var(--bad);font-size:14px;min-height:1em;margin:0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.del{color:var(--bad)}
+.preview{width:100%;aspect-ratio:10/7;object-fit:cover;border-radius:6px;border:1px solid var(--ink);background:var(--wall)}
+.gate{width:min(380px,100%);height:auto;align-self:center;margin:auto;border:1.5px solid var(--ink);border-radius:12px}
+#gate{justify-content:center;align-items:center}
 @media (prefers-reduced-motion:reduce){.tool:hover,.tool:focus-visible,.panel{animation:none}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="bar mono"><h1>WON's Toolbox</h1><span id="count"></span></header>
+  <nav class="cats" id="cats"></nav>
   <main class="wall" id="wall"></main>
 </div>
 
+<!-- 도구 꺼내 보기 -->
 <div class="back" id="back" hidden>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="pname">
     <div class="ptop mono"><span id="pno"></span><button class="x" id="close">벽에 다시 걸기 ×</button></div>
     <img class="shot" id="pimg" alt="">
     <h2 id="pname"></h2>
     <p id="pdesc"></p>
-    <a class="go" id="pgo">이 도구 쓰기 →</a>
+    <a class="go" id="pgo"></a>
+  </div>
+</div>
+
+<!-- 관리자: PIN -->
+<div class="back" id="gate" hidden>
+  <div class="panel gate" role="dialog" aria-modal="true" aria-labelledby="gtitle">
+    <h2 id="gtitle" style="font-size:22px">관리자</h2>
+    <form class="form" id="gform">
+      <p class="hint" id="gmsg"></p>
+      <label>PIN<input type="password" id="gpin" autocomplete="off"></label>
+      <label id="gpin2row" hidden>PIN 한 번 더<input type="password" id="gpin2" autocomplete="off"></label>
+      <p class="err" id="gerr"></p>
+      <div class="row"><button class="go" type="submit">들어가기</button><a class="x" href="./" style="display:inline-flex;align-items:center;text-decoration:none">나가기</a></div>
+    </form>
+  </div>
+</div>
+
+<!-- 관리자: 도구 추가·수정 -->
+<div class="back" id="edit" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="etitle">
+    <div class="ptop"><h2 id="etitle" style="font-size:22px">도구</h2><button class="x" type="button" id="eclose">닫기 ×</button></div>
+    <form class="form" id="eform">
+      <label>이름<input type="text" id="ename" maxlength="40" required></label>
+      <label>태그 <span class="hint">카드 오른쪽 위 주황 꼬리표 (예: CARD GAME)</span><input type="text" id="etag" maxlength="20"></label>
+      <label>카테고리<select id="ecat"><option>수업</option><option>업무</option><option>기타</option></select></label>
+      <label>설명<textarea id="edesc" maxlength="300"></textarea></label>
+      <div class="form" style="gap:6px"><b style="font-size:14px">종류</b>
+        <div class="seg"><label><input type="radio" name="kind" value="web" checked> 웹 링크</label><label><input type="radio" name="kind" value="file"> 파일 내려받기 (exe 등)</label></div></div>
+      <label id="eurlrow">링크 주소<input type="url" id="eurl" placeholder="https://"></label>
+      <label id="efilerow" hidden>파일 <span class="hint" id="efilenow"></span><input type="file" id="efile"><span class="hint">50MB까지</span></label>
+      <label>캡처 그림 <span class="hint">비우면 NO IMAGE</span><input type="file" id="eimg" accept="image/*"></label>
+      <img class="preview" id="eprev" alt="" hidden>
+      <div class="row"><button class="sbtn" type="button" id="eimgdel" hidden>그림 빼기</button></div>
+      <p class="err" id="eerr"></p>
+      <div class="row"><button class="go" type="submit" id="esave">저장</button><button class="x del" type="button" id="edel">삭제</button></div>
+    </form>
   </div>
 </div>
 
 <script>
-// 앱 목록은 apps.json 에서 고칩니다 (추가·수정·삭제·순서).
-const EMPTY = 3; // 벽 끝에 그려 둘 빈 자리 수
+const SB = 'https://khkjhjuhoulnwqhsrqfs.supabase.co';
+const KEY = 'sb_publishable_meOHQA0cIp-VFntdfPacPA_BsX05RFU';   // 브라우저 공개용 키 (데이터는 서버 규칙이 지킨다)
+const CATS = ['수업', '업무', '기타'];
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const no = i => "T-" + String(i + 1).padStart(2, "0");
-let apps = [], lastBtn = null;
+const H = { apikey: KEY, Authorization: 'Bearer ' + KEY };
 
-fetch("apps.json", { cache: "no-store" }).then(r => r.json()).then(list => {
-  apps = list;
-  $("count").textContent = "도구 " + apps.length;
-  $("wall").innerHTML = apps.map((a, i) => `
+async function rpc(fn, args) {
+  const r = await fetch(`${SB}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { ...H, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) });
+  const t = await r.text();
+  if (!r.ok) { let m = t; try { m = JSON.parse(t).message || t; } catch (e) {} throw new Error(m); }
+  return t ? JSON.parse(t) : null;
+}
+
+let apps = [], cat = '전체', lastBtn = null;
+const ADMIN = new URLSearchParams(location.search).has('admin');
+let pin = '';   // 관리자 PIN은 이 창에만 (새로고침하면 다시 묻는다)
+
+async function load() {
+  try { apps = await rpc('tb_list') || []; }
+  catch (e) { $("wall").innerHTML = '<p class="none">도구 목록을 불러오지 못했어요. 새로고침해 주세요.</p>'; return; }
+  render();
+}
+function render() {
+  $("count").innerHTML = (pin ? '<span class="adm-bar"><b class="mono">관리자</b><button class="sbtn" id="apin">PIN 바꾸기</button><a class="sbtn" href="./" style="display:inline-flex;align-items:center;text-decoration:none">나가기</a></span> ' : '') + "도구 " + apps.length;
+  if (pin) $("apin").onclick = changePin;
+  const n = c => apps.filter(a => a.cat === c).length;
+  $("cats").innerHTML = ['전체', ...CATS].map(c =>
+    `<button class="cat ${c === cat ? 'on' : ''}" data-c="${c}">${c}<small>${c === '전체' ? apps.length : n(c)}</small></button>`).join('');
+  const shown = apps.map((a, i) => ({ a, i })).filter(x => cat === '전체' || x.a.cat === cat);
+  $("wall").innerHTML = shown.map(({ a, i }) => `
     <div class="slot"><button class="tool" data-i="${i}" aria-label="${esc(a.name)} 꺼내기">
       <div class="pin" aria-hidden="true"></div>
       <div class="card">
@@ -86,28 +173,192 @@ fetch("apps.json", { cache: "no-store" }).then(r => r.json()).then(list => {
         ${a.img ? `<img class="shot" src="${esc(a.img)}" alt="" loading="lazy">` : `<div class="shot noshot mono">NO IMAGE</div>`}
         <div class="name">${esc(a.name)}</div>
       </div>
-    </button></div>`).join("")
-  + Array.from({ length: EMPTY }, (_, k) => `
-    <div class="slot empty" aria-hidden="true"><div class="pin"></div>
-      <div class="hole mono"><b>${no(apps.length + k)}</b><span style="font-family:'Noto Sans KR',sans-serif;font-size:15px">빈 자리 · 곧 걸립니다</span></div></div>`).join("");
-}).catch(() => { $("wall").textContent = "도구 목록을 불러오지 못했어요. 새로고침해 주세요."; });
+    </button>${pin ? `<div class="slot-tools">
+      <button class="sbtn" data-mv="-1" data-i="${i}" aria-label="앞으로">◀</button>
+      <button class="sbtn" data-ed="${i}">수정</button>
+      <button class="sbtn" data-mv="1" data-i="${i}" aria-label="뒤로">▶</button></div>` : ''}</div>`).join("")
+    + (pin ? `<div class="slot add"><div class="pin" aria-hidden="true"></div><button class="hole" id="addslot">+ 새 도구 걸기</button></div>` : '')
+    || '<p class="none">이 분류에는 아직 도구가 없어요.</p>';
+  if (pin) $("addslot").onclick = () => openEdit(null);
+}
 
+$("cats").addEventListener("click", e => { const b = e.target.closest(".cat"); if (b) { cat = b.dataset.c; render(); } });
 $("wall").addEventListener("click", e => {
+  const ed = e.target.closest("[data-ed]"); if (ed) { openEdit(apps[+ed.dataset.ed]); return; }
+  const mv = e.target.closest("[data-mv]"); if (mv) { move(+mv.dataset.i, +mv.dataset.mv); return; }
   const b = e.target.closest(".tool"); if (!b) return;
   const i = +b.dataset.i, a = apps[i];
   lastBtn = b;
   $("pno").textContent = no(i) + (a.tag ? " · " + a.tag : "");
   $("pimg").hidden = !a.img; if (a.img) { $("pimg").src = a.img; $("pimg").alt = a.name + " 화면"; }
   $("pname").textContent = a.name;
-  $("pdesc").textContent = a.desc || "";
+  $("pdesc").textContent = a.descr || "";
   $("pgo").href = a.url;
+  $("pgo").textContent = a.kind === 'file' ? '내려받기 ↓' : '이 도구 쓰기 →';
   $("back").hidden = false;
   $("close").focus();
 });
 const close = () => { $("back").hidden = true; lastBtn?.focus(); };
 $("close").onclick = close;
 $("back").addEventListener("click", e => { if (e.target === $("back")) close(); });
-addEventListener("keydown", e => { if (e.key === "Escape" && !$("back").hidden) close(); });
+addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if (!$("back").hidden) close();
+  else if (!$("edit").hidden) $("edit").hidden = true;
+});
+
+// ================= 관리자 (주소 뒤 ?admin) =================
+let setup = false;
+async function openGate() {
+  $("gate").hidden = false;
+  try { setup = !!(await rpc('tb_admin_state')); } catch (e) { $("gerr").textContent = '서버에 연결할 수 없어요.'; }
+  $("gtitle").textContent = setup ? '관리자 PIN 만들기' : '관리자';
+  $("gmsg").textContent = setup ? '처음이에요. 6자 이상으로 PIN을 정해 주세요 (숫자+글자 권장). 잊으면 되찾기 어려우니 꼭 기억해 두세요.' : 'PIN을 넣어 주세요.';
+  $("gpin2row").hidden = !setup;
+  $("gpin").focus();
+}
+$("gform").addEventListener("submit", async e => {
+  e.preventDefault();
+  const p = $("gpin").value;
+  $("gerr").textContent = '';
+  try {
+    if (setup) {
+      if (p.length < 6) { $("gerr").textContent = '6자 이상으로 정해 주세요.'; return; }
+      if (p !== $("gpin2").value) { $("gerr").textContent = '두 칸의 PIN이 다릅니다.'; return; }
+      if (!(await rpc('tb_admin_setup', { p_pin: p }))) { $("gerr").textContent = '이미 PIN이 있어요. 새로고침해 주세요.'; return; }
+    }
+    const s = await rpc('tb_admin_check', { p_pin: p });
+    if (s !== 'ok') { $("gerr").textContent = { badpin: 'PIN이 다릅니다.', locked: '여러 번 틀려서 10분 동안 잠겼어요.' }[s] || 'PIN을 확인하지 못했어요.'; return; }
+  } catch (err) { $("gerr").textContent = '서버에 연결할 수 없어요.'; return; }
+  pin = p;
+  $("gate").hidden = true;
+  render();
+});
+
+async function changePin() {
+  const a = prompt('새 PIN (6자 이상)'); if (a === null) return;
+  if (a.length < 6) { alert('6자 이상으로 정해 주세요.'); return; }
+  if (prompt('새 PIN 한 번 더') !== a) { alert('두 번 넣은 PIN이 다릅니다.'); return; }
+  try { if (await rpc('tb_admin_change', { p_pin: pin, p_new: a })) { pin = a; alert('PIN을 바꿨어요.'); } else alert('바꾸지 못했어요.'); }
+  catch (e) { alert('바꾸지 못했어요: ' + e.message); }
+}
+
+async function move(i, d) {
+  const j = i + d;
+  if (j < 0 || j >= apps.length) return;
+  [apps[i], apps[j]] = [apps[j], apps[i]];
+  render();
+  try { await rpc('tb_order', { p_pin: pin, p_ids: apps.map(a => a.id) }); } catch (e) { alert('순서를 저장하지 못했어요.'); load(); }
+}
+
+// ---- 파일 저장소 (관리자가 받은 10분짜리 허가표가 있는 경로만 올리고 지울 수 있다) ----
+const pub = path => `${SB}/storage/v1/object/public/toolbox/${path}`;
+const ownPath = url => (String(url).split('/storage/v1/object/public/toolbox/')[1] || '').split('?')[0];
+async function upload(dir, blob, ext) {
+  const path = `${dir}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
+  if (!(await rpc('tb_ticket', { p_pin: pin, p_path: path }))) throw new Error('PIN을 다시 확인해 주세요');
+  const r = await fetch(`${SB}/storage/v1/object/toolbox/${path}`, { method: 'POST', headers: { ...H, 'Content-Type': blob.type || 'application/octet-stream' }, body: blob });
+  if (!r.ok) throw new Error('올리지 못했어요 (' + r.status + ')');
+  return path;
+}
+async function removeStored(url) {   // 이 저장소에 올린 파일만 지운다 (img/… 처럼 사이트에 든 그림은 그대로)
+  const path = ownPath(url);
+  if (!path) return;
+  try {
+    await rpc('tb_ticket', { p_pin: pin, p_path: path });
+    await fetch(`${SB}/storage/v1/object/toolbox`, { method: 'DELETE', headers: { ...H, 'Content-Type': 'application/json' }, body: JSON.stringify({ prefixes: [path] }) });
+  } catch (e) { /* 못 지워도 목록은 이미 정리됐다 */ }
+}
+// 캡처 그림은 가로 1000px JPEG로 줄여서 올린다
+function shrink(file) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, 1000 / img.width), c = document.createElement('canvas');
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(b => b ? res(b) : rej(new Error('그림을 읽지 못했어요')), 'image/jpeg', 0.85);
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = () => rej(new Error('그림 파일이 아니에요'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+// ---- 도구 추가·수정 창 ----
+let cur = null, imgState = 'keep';   // keep | new | none
+const kind = () => document.querySelector('input[name=kind]:checked').value;
+function syncKind() { $("eurlrow").hidden = kind() !== 'web'; $("efilerow").hidden = kind() !== 'file'; }
+document.querySelectorAll('input[name=kind]').forEach(r => r.onchange = syncKind);
+function openEdit(a) {
+  cur = a;
+  $("etitle").textContent = a ? '도구 고치기' : '새 도구 걸기';
+  $("ename").value = a?.name || ''; $("etag").value = a?.tag || ''; $("ecat").value = a?.cat || (CATS.includes(cat) ? cat : '수업');
+  $("edesc").value = a?.descr || '';
+  document.querySelector(`input[name=kind][value=${a?.kind || 'web'}]`).checked = true; syncKind();
+  $("eurl").value = a && a.kind !== 'file' ? a.url : '';
+  $("efile").value = ''; $("efilenow").textContent = a?.kind === 'file' && a.file_name ? '지금: ' + a.file_name : '';
+  $("eimg").value = ''; imgState = 'keep';
+  $("eprev").hidden = !a?.img; if (a?.img) $("eprev").src = a.img;
+  $("eimgdel").hidden = !a?.img;
+  $("edel").hidden = !a;
+  $("eerr").textContent = '';
+  $("edit").hidden = false;
+  $("ename").focus();
+}
+$("eclose").onclick = () => { $("edit").hidden = true; };
+$("eimg").onchange = () => {
+  const f = $("eimg").files[0]; if (!f) return;
+  imgState = 'new'; $("eprev").src = URL.createObjectURL(f); $("eprev").hidden = false; $("eimgdel").hidden = false;
+};
+$("eimgdel").onclick = () => { imgState = 'none'; $("eimg").value = ''; $("eprev").hidden = true; $("eimgdel").hidden = true; };
+
+$("eform").addEventListener("submit", async e => {
+  e.preventDefault();
+  const name = $("ename").value.trim(), k = kind();
+  const err = m => { $("eerr").textContent = m; };
+  if (!name) return err('이름을 넣어 주세요.');
+  if (k === 'web' && !/^https?:\/\//.test($("eurl").value.trim())) return err('링크는 https:// 로 시작해야 해요.');
+  const f = $("efile").files[0];
+  if (k === 'file' && !f && !(cur?.kind === 'file' && cur.url)) return err('올릴 파일을 골라 주세요.');
+  if (f && f.size > 50 * 1024 * 1024) return err('파일이 50MB보다 커요. 더 큰 파일은 따로 말씀해 주세요.');
+  $("esave").disabled = true; err(f ? '파일 올리는 중…' : '저장 중…');
+  const old = cur ? { ...cur } : null;
+  try {
+    let url = $("eurl").value.trim(), file_name = '';
+    if (k === 'file') {
+      if (f) {
+        const ext = (f.name.match(/\.[A-Za-z0-9]{1,8}$/) || [''])[0].toLowerCase();
+        const path = await upload('files', f, ext);
+        url = pub(path) + '?download=' + encodeURIComponent(f.name);
+        file_name = f.name;
+      } else { url = old.url; file_name = old.file_name; }
+    }
+    let img = old?.img || '';
+    if (imgState === 'new') img = pub(await upload('img', await shrink($("eimg").files[0]), '.jpg'));
+    if (imgState === 'none') img = '';
+    const id = await rpc('tb_save', { p_pin: pin, p: { id: old?.id || '', name, tag: $("etag").value.trim(), cat: $("ecat").value, descr: $("edesc").value.trim(), kind: k, url, file_name, img } });
+    if (!id) throw new Error('PIN을 다시 확인해 주세요');
+    // 바뀌어서 안 쓰게 된 옛 파일·그림은 저장소에서 지운다
+    if (old && old.img && old.img !== img) removeStored(old.img);
+    if (old && old.kind === 'file' && old.url !== url) removeStored(old.url);
+    $("edit").hidden = true;
+    await load();
+  } catch (x) { err('저장하지 못했어요: ' + x.message); }
+  finally { $("esave").disabled = false; }
+});
+$("edel").onclick = async () => {
+  if (!cur || !confirm(`'${cur.name}'을(를) 벽에서 뗄까요? 되돌릴 수 없어요.`)) return;
+  try {
+    if (!(await rpc('tb_delete', { p_pin: pin, p_id: cur.id }))) throw new Error('PIN을 다시 확인해 주세요');
+    removeStored(cur.img); if (cur.kind === 'file') removeStored(cur.url);
+    $("edit").hidden = true;
+    await load();
+  } catch (x) { $("eerr").textContent = '지우지 못했어요: ' + x.message; }
+};
+
+load();
+if (ADMIN) openGate();
 </script>
 </body>
 </html>
