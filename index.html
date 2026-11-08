@@ -53,6 +53,8 @@ body{margin:0;word-break:keep-all;color:var(--ink);font-family:'Noto Sans KR',sa
 .panel p{margin:0;font-size:17px;line-height:1.7;color:var(--sub)}
 .go{align-self:flex-start;display:inline-flex;align-items:center;min-height:52px;padding:0 28px;border-radius:99px;background:var(--ac);color:var(--ink);font-weight:800;font-size:17px;text-decoration:none;white-space:nowrap;transition:background .2s;border:0;cursor:pointer;font-family:inherit}
 .go:hover{background:var(--ac2)}
+.go[hidden],#preview-note[hidden]{display:none}
+#preview-note{padding:14px 16px;border:1.5px dashed var(--line);border-radius:8px;font-size:15px}
 /* 관리자 */
 .adm-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .adm-bar b{background:var(--ac);color:var(--ink);padding:2px 8px;border-radius:3px}
@@ -94,6 +96,7 @@ body{margin:0;word-break:keep-all;color:var(--ink);font-family:'Noto Sans KR',sa
     <h2 id="pname"></h2>
     <p id="pdesc"></p>
     <a class="go" id="pgo"></a>
+    <p id="preview-note" hidden>준비 중인 프로그램입니다. 현재는 소개만 공개하며, 실행 파일과 다운로드 링크는 제공하지 않습니다.</p>
   </div>
 </div>
 
@@ -121,7 +124,7 @@ body{margin:0;word-break:keep-all;color:var(--ink);font-family:'Noto Sans KR',sa
       <label>카테고리<select id="ecat"><option>수업</option><option>업무</option><option>기타</option></select></label>
       <label>설명<textarea id="edesc" maxlength="300"></textarea></label>
       <div class="form" style="gap:6px"><b style="font-size:14px">종류</b>
-        <div class="seg"><label><input type="radio" name="kind" value="web" checked> 웹 링크</label><label><input type="radio" name="kind" value="file"> 파일 내려받기 (exe 등)</label></div></div>
+        <div class="seg"><label><input type="radio" name="kind" value="web" checked> 웹 링크</label><label><input type="radio" name="kind" value="file"> 파일 내려받기 (exe 등)</label><label><input type="radio" name="kind" value="preview"> 준비 중 (소개만)</label></div></div>
       <label id="eurlrow">링크 주소<input type="url" id="eurl" placeholder="https://"></label>
       <label id="efilerow" hidden>파일 <span class="hint" id="efilenow"></span><input type="file" id="efile"><span class="hint">50MB까지</span></label>
       <label>캡처 그림 <span class="hint">비우면 NO IMAGE</span><input type="file" id="eimg" accept="image/*"></label>
@@ -141,6 +144,9 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const no = i => "T-" + String(i + 1).padStart(2, "0");
 const H = { apikey: KEY, Authorization: 'Bearer ' + KEY };
+// 기존 서버의 web/file 형식과 호환되는 소개 전용 표식. 파일 주소를 담지 않는다.
+const PREVIEW_URL = new URL('./#toolbox-preview', location.href).href;
+const isPreview = a => a?.kind === 'web' && a.url === PREVIEW_URL;
 
 async function rpc(fn, args) {
   const r = await fetch(`${SB}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { ...H, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) });
@@ -193,7 +199,11 @@ $("wall").addEventListener("click", e => {
   $("pimg").hidden = !a.img; if (a.img) { $("pimg").src = a.img; $("pimg").alt = a.name + " 화면"; }
   $("pname").textContent = a.name;
   $("pdesc").textContent = a.descr || "";
-  $("pgo").href = a.url;
+  const preview = isPreview(a);
+  $("pgo").hidden = preview;
+  $("preview-note").hidden = !preview;
+  $("pgo").removeAttribute('href');
+  if (!preview) $("pgo").href = a.url;
   $("pgo").textContent = a.kind === 'file' ? '내려받기 ↓' : '이 도구 쓰기 →';
   $("back").hidden = false;
   $("close").focus();
@@ -295,8 +305,8 @@ function openEdit(a) {
   $("etitle").textContent = a ? '도구 고치기' : '새 도구 걸기';
   $("ename").value = a?.name || ''; $("etag").value = a?.tag || ''; $("ecat").value = a?.cat || (CATS.includes(cat) ? cat : '수업');
   $("edesc").value = a?.descr || '';
-  document.querySelector(`input[name=kind][value=${a?.kind || 'web'}]`).checked = true; syncKind();
-  $("eurl").value = a && a.kind !== 'file' ? a.url : '';
+  document.querySelector(`input[name=kind][value=${isPreview(a) ? 'preview' : a?.kind || 'web'}]`).checked = true; syncKind();
+  $("eurl").value = a && a.kind !== 'file' && !isPreview(a) ? a.url : '';
   $("efile").value = ''; $("efilenow").textContent = a?.kind === 'file' && a.file_name ? '지금: ' + a.file_name : '';
   $("eimg").value = ''; imgState = 'keep';
   $("eprev").hidden = !a?.img; if (a?.img) $("eprev").src = a.img;
@@ -321,11 +331,11 @@ $("eform").addEventListener("submit", async e => {
   if (k === 'web' && !/^https?:\/\//.test($("eurl").value.trim())) return err('링크는 https:// 로 시작해야 해요.');
   const f = $("efile").files[0];
   if (k === 'file' && !f && !(cur?.kind === 'file' && cur.url)) return err('올릴 파일을 골라 주세요.');
-  if (f && f.size > 50 * 1024 * 1024) return err('파일이 50MB보다 커요. 더 큰 파일은 따로 말씀해 주세요.');
+  if (k === 'file' && f && f.size > 50 * 1024 * 1024) return err('파일이 50MB보다 커요. 더 큰 파일은 따로 말씀해 주세요.');
   $("esave").disabled = true; err(f ? '파일 올리는 중…' : '저장 중…');
   const old = cur ? { ...cur } : null;
   try {
-    let url = $("eurl").value.trim(), file_name = '';
+    let url = k === 'preview' ? PREVIEW_URL : $("eurl").value.trim(), file_name = '';
     if (k === 'file') {
       if (f) {
         const ext = (f.name.match(/\.[A-Za-z0-9]{1,8}$/) || [''])[0].toLowerCase();
@@ -337,7 +347,7 @@ $("eform").addEventListener("submit", async e => {
     let img = old?.img || '';
     if (imgState === 'new') img = pub(await upload('img', await shrink($("eimg").files[0]), '.jpg'));
     if (imgState === 'none') img = '';
-    const id = await rpc('tb_save', { p_pin: pin, p: { id: old?.id || '', name, tag: $("etag").value.trim(), cat: $("ecat").value, descr: $("edesc").value.trim(), kind: k, url, file_name, img } });
+    const id = await rpc('tb_save', { p_pin: pin, p: { id: old?.id || '', name, tag: $("etag").value.trim(), cat: $("ecat").value, descr: $("edesc").value.trim(), kind: k === 'preview' ? 'web' : k, url, file_name, img } });
     if (!id) throw new Error('PIN을 다시 확인해 주세요');
     // 바뀌어서 안 쓰게 된 옛 파일·그림은 저장소에서 지운다
     if (old && old.img && old.img !== img) removeStored(old.img);
