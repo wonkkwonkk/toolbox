@@ -205,7 +205,9 @@ $("wall").addEventListener("click", e => {
   $("preview-note").hidden = !preview;
   $("pgo").removeAttribute('href');
   if (!preview) $("pgo").href = a.url;
-  $("pgo").textContent = a.kind === 'file' ? '내려받기 ↓' : '이 도구 쓰기 →';
+  $("pgo").textContent = a.kind === 'file' ? '내려받기 ↓' : '이 도구 쓰기 ↗';
+  // 웹앱은 새 탭에서 연다 (Toolbox는 그대로 남아 있게). 내려받기는 지금 탭에서 바로 받는다
+  if (a.kind === 'file') $("pgo").removeAttribute('target'); else { $("pgo").target = '_blank'; $("pgo").rel = 'noopener'; }
   $("back").hidden = false;
   $("close").focus();
 });
